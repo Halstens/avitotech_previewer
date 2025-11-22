@@ -11,12 +11,13 @@ import (
 
 type Handler struct {
 	*BaseHandler
-	db           *database.DB
-	mux          *http.ServeMux
-	teamHandler  *TeamHandler
-	userHandler  *UserHandler
-	prHandler    *PullRequestHandler
-	statsHandler *StatsHandler
+	db                      *database.DB
+	mux                     *http.ServeMux
+	teamHandler             *TeamHandler
+	userHandler             *UserHandler
+	prHandler               *PullRequestHandler
+	statsHandler            *StatsHandler
+	bulkDeactivationHandler *BulkDeactivationHandler
 }
 
 func New(db *database.DB) *Handler {
@@ -25,15 +26,17 @@ func New(db *database.DB) *Handler {
 	prRepo := repository.NewPullRequestRepository(db.DB)
 	prService := service.NewPullRequestService(prRepo, userRepo)
 	statsRepo := repository.NewStatsRepository(db.DB)
+	bulkService := service.NewBulkDeactivationService(userRepo, prRepo, prService)
 
 	h := &Handler{
-		BaseHandler:  &BaseHandler{},
-		db:           db,
-		mux:          http.NewServeMux(),
-		teamHandler:  NewTeamHandler(teamRepo),
-		userHandler:  NewUserHandler(userRepo, prService),
-		prHandler:    NewPullRequestHandler(prService),
-		statsHandler: NewStatsHandler(statsRepo),
+		BaseHandler:             &BaseHandler{},
+		db:                      db,
+		mux:                     http.NewServeMux(),
+		teamHandler:             NewTeamHandler(teamRepo),
+		userHandler:             NewUserHandler(userRepo, prService),
+		prHandler:               NewPullRequestHandler(prService),
+		statsHandler:            NewStatsHandler(statsRepo),
+		bulkDeactivationHandler: NewBulkDeactivationHandler(bulkService),
 	}
 
 	h.registerRoutes()
@@ -41,30 +44,28 @@ func New(db *database.DB) *Handler {
 }
 
 func (h *Handler) registerRoutes() {
-	// Health check
+
 	h.mux.HandleFunc("GET /health", h.healthCheck)
 
-	// Teams
 	h.mux.HandleFunc("POST /team/add", h.teamHandler.AddTeam)
 	h.mux.HandleFunc("GET /team/get", h.teamHandler.GetTeam)
 
-	// Users
 	h.mux.HandleFunc("POST /users/setIsActive", h.userHandler.SetUserActive)
 	h.mux.HandleFunc("GET /users/getReview", h.userHandler.GetUserReviews)
 
-	// Pull Requests
 	h.mux.HandleFunc("POST /pullRequest/create", h.prHandler.CreatePR)
 	h.mux.HandleFunc("POST /pullRequest/merge", h.prHandler.MergePR)
 	h.mux.HandleFunc("POST /pullRequest/reassign", h.prHandler.ReassignPR)
 
 	h.mux.HandleFunc("GET /stats", h.statsHandler.GetStats)
+
+	h.mux.HandleFunc("POST /team/bulkDeactivate", h.bulkDeactivationHandler.BulkDeactivateTeam)
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.mux.ServeHTTP(w, r)
 }
 
-// HealthCheck проверяет доступность сервиса и базы данных
 func (h *Handler) healthCheck(w http.ResponseWriter, r *http.Request) {
 	if err := h.db.HealthCheck(); err != nil {
 		h.writeError(w, http.StatusServiceUnavailable, "Service Unavailable", "DATABASE_ERROR")

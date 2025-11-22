@@ -257,3 +257,27 @@ func (r *PullRequestRepository) GetUserTeam(ctx context.Context, userID string) 
 	}
 	return teamName, nil
 }
+
+func (r *PullRequestRepository) GetOpenPRsWithReviewer(ctx context.Context, reviewerID string) ([]string, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT DISTINCT pr.pull_request_id
+		FROM pull_requests pr
+		JOIN pull_request_reviewers prr ON pr.pull_request_id = prr.pull_request_id
+		WHERE prr.reviewer_id = $1 AND pr.status = 'OPEN'
+	`, reviewerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query PRs with reviewer: %w", err)
+	}
+	defer rows.Close()
+
+	var prIDs []string
+	for rows.Next() {
+		var prID string
+		if err := rows.Scan(&prID); err != nil {
+			return nil, fmt.Errorf("failed to scan PR ID: %w", err)
+		}
+		prIDs = append(prIDs, prID)
+	}
+
+	return prIDs, nil
+}
