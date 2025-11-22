@@ -1,0 +1,332 @@
+{
+	"info": {
+		"_postman_id": "ea19f7d4-2115-4667-8d0a-3c90be97fb0c",
+		"name": "avitotech",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32567871"
+	},
+	"item": [
+		{
+			"name": "avitotech_addteam",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"team_name\": \"backend\",\r\n    \"members\": [\r\n      {\"user_id\": \"u1\", \"username\": \"Alice\", \"is_active\": true},\r\n      {\"user_id\": \"u2\", \"username\": \"Bob\", \"is_active\": true},\r\n      {\"user_id\": \"u3\", \"username\": \"Charlie\", \"is_active\": true},\r\n      {\"user_id\": \"u4\", \"username\": \"David\", \"is_active\": true},\r\n      {\"user_id\": \"u5\", \"username\": \"Eve\", \"is_active\": true}\r\n    ]\r\n  }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/team/add",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"team",
+						"add"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/health",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/health",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get comand Request",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/team/get?team_name=backend",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"team",
+						"get"
+					],
+					"query": [
+						{
+							"key": "team_name",
+							"value": "backend"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CreatePR Request",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"pull_request_id\": \"pr-3\", \r\n    \"pull_request_name\": \"Feature C\",\r\n    \"author_id\": \"u3\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/pullRequest/create",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"pullRequest",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CheckUserOnPR",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/users/getReview?user_id=u5",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"users",
+						"getReview"
+					],
+					"query": [
+						{
+							"key": "user_id",
+							"value": "u5"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ReassignR",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"pull_request_id\": \"pr-1\",\r\n    \"old_user_id\": \"u2\"\r\n  }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/pullRequest/reassign",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"pullRequest",
+						"reassign"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SetIsActive",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user_id\": \"u3\",\r\n    \"is_active\": false\r\n  }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/users/setIsActive",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"users",
+						"setIsActive"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "MergePR",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"pull_request_id\": \"pr-1\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/pullRequest/merge",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"pullRequest",
+						"merge"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "TryChangeBeforeMerge",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"pull_request_id\": \"pr-1\",\r\n    \"old_user_id\": \"u4\"\r\n  }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/pullRequest/reassign",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"pullRequest",
+						"reassign"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CreateSecondPR",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"pull_request_id\": \"pr-2\", \r\n    \"pull_request_name\": \"Fix bug\",\r\n    \"author_id\": \"u4\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/pullRequest/create",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"pullRequest",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetStatistics",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/stats",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"stats"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "MassDeactivateUsers",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"team_name\": \"backend\",\r\n    \"exclude_user_ids\": [\"u1\", \"u5\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/team/bulkDeactivate",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"team",
+						"bulkDeactivate"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -1,7 +1,5 @@
 ## Быстрое тестирование API
 
-После запуска сервиса протестируйте основные сценарии:
-
 ### Сценарий 1: Создание команды и PR
 ```bash
 # Создать команду
@@ -27,3 +25,6 @@ curl -X POST http://localhost:8080/pullRequest/create \
 
 # Проверить статистику
 curl http://localhost:8080/stats
+
+
+Все запросы тестировал в Postman, я экспортировал коллекцию запросов в [json](./avitotech.postman_collection.json)
