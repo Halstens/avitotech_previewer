@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/pavel/avitotech_previewer/internal/domain"
@@ -34,40 +35,40 @@ type ReassignedPR struct {
 	NewReviewer string `json:"new_reviewer"`
 }
 
-func (s *BulkDeactivationService) BulkDeactivateTeam(ctx context.Context, teamName string, excludeUserIDs []string) (*BulkDeactivationResult, error) {
-	// Получаем пользователей команды до деактивации
-	teamUsers, err := s.userRepo.GetTeamUsers(ctx, teamName)
-	if err != nil {
-		return nil, err
-	}
+// func (s *BulkDeactivationService) BulkDeactivateTeam(ctx context.Context, teamName string, excludeUserIDs []string) (*BulkDeactivationResult, error) {
+// 	// Получаем пользователей команды до деактивации
+// 	teamUsers, err := s.userRepo.GetTeamUsers(ctx, teamName)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	if len(teamUsers) == 0 {
-		return nil, &domain.Error{Code: "NOT_FOUND", Message: "team not found"}
-	}
+// 	if len(teamUsers) == 0 {
+// 		return nil, &domain.Error{Code: "NOT_FOUND", Message: "team not found"}
+// 	}
 
-	// Деактивируем пользователей
-	deactivatedCount, err := s.userRepo.BulkDeactivateUsers(ctx, teamName, excludeUserIDs)
-	if err != nil {
-		return nil, err
-	}
+// 	// Деактивируем пользователей
+// 	deactivatedCount, err := s.userRepo.BulkDeactivateUsers(ctx, teamName, excludeUserIDs)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// Находим пользователей, которых нужно деактивировать
-	usersToDeactivate := s.getUsersToDeactivate(teamUsers, excludeUserIDs)
+// 	// Находим пользователей, которых нужно деактивировать
+// 	usersToDeactivate := s.getUsersToDeactivate(teamUsers, excludeUserIDs)
 
-	// Переназначаем открытые PR для деактивированных пользователей
-	reassignedPRs, err := s.reassignPRsForDeactivatedUsers(ctx, usersToDeactivate)
-	if err != nil {
-		return nil, err
-	}
+// 	// Переназначаем открытые PR для деактивированных пользователей
+// 	reassignedPRs, err := s.reassignPRsForDeactivatedUsers(ctx, usersToDeactivate)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	result := &BulkDeactivationResult{
-		DeactivatedCount: deactivatedCount,
-		ReassignedPRs:    reassignedPRs,
-		Timestamp:        time.Now(),
-	}
+// 	result := &BulkDeactivationResult{
+// 		DeactivatedCount: deactivatedCount,
+// 		ReassignedPRs:    reassignedPRs,
+// 		Timestamp:        time.Now(),
+// 	}
 
-	return result, nil
-}
+// 	return result, nil
+// }
 
 func (s *BulkDeactivationService) getUsersToDeactivate(teamUsers []domain.User, excludeUserIDs []string) []domain.User {
 	excludeSet := make(map[string]bool)
@@ -86,20 +87,21 @@ func (s *BulkDeactivationService) getUsersToDeactivate(teamUsers []domain.User, 
 }
 
 func (s *BulkDeactivationService) reassignPRsForDeactivatedUsers(ctx context.Context, usersToDeactivate []domain.User) ([]ReassignedPR, error) {
-	var reassignedPRs []ReassignedPR
+	reassignedPRs := make([]ReassignedPR, 0)
 
 	for _, user := range usersToDeactivate {
-		// Находим открытые PR, где пользователь является ревьюером
+
 		prIDs, err := s.prRepo.GetOpenPRsWithReviewer(ctx, user.UserID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get PRs for user %s: %w", user.UserID, err)
 		}
 
 		for _, prID := range prIDs {
-			// Пытаемся переназначить ревьюера
+
 			newReviewer, err := s.prService.ReassignReviewer(ctx, prID, user.UserID)
 			if err != nil {
-				// Если не удалось переназначить, пропускаем (можно добавить логирование)
+				// Логируем ошибку, но продолжаем обработку других PR
+				fmt.Printf("Failed to reassign PR %s from user %s: %v\n", prID, user.UserID, err)
 				continue
 			}
 
@@ -112,4 +114,44 @@ func (s *BulkDeactivationService) reassignPRsForDeactivatedUsers(ctx context.Con
 	}
 
 	return reassignedPRs, nil
+}
+
+func (s *BulkDeactivationService) BulkDeactivateTeam(ctx context.Context, teamName string, excludeUserIDs []string) (*BulkDeactivationResult, error) {
+	fmt.Printf("Starting bulk deactivation for team: %s, exclude: %v\n", teamName, excludeUserIDs)
+
+	teamUsers, err := s.userRepo.GetTeamUsers(ctx, teamName)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Found %d users in team\n", len(teamUsers))
+
+	if len(teamUsers) == 0 {
+		return nil, &domain.Error{Code: "NOT_FOUND", Message: "team not found"}
+	}
+
+	usersToDeactivate := s.getUsersToDeactivate(teamUsers, excludeUserIDs)
+	fmt.Printf("Users to deactivate: %v\n", usersToDeactivate)
+
+	deactivatedCount, err := s.userRepo.BulkDeactivateUsers(ctx, teamName, excludeUserIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Deactivated %d users\n", deactivatedCount)
+
+	reassignedPRs, err := s.reassignPRsForDeactivatedUsers(ctx, usersToDeactivate)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Reassigned %d PRs\n", len(reassignedPRs))
+
+	result := &BulkDeactivationResult{
+		DeactivatedCount: deactivatedCount,
+		ReassignedPRs:    reassignedPRs,
+		Timestamp:        time.Now(),
+	}
+
+	return result, nil
 }
