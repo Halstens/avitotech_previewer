@@ -11,11 +11,12 @@ import (
 
 type Handler struct {
 	*BaseHandler
-	db          *database.DB
-	mux         *http.ServeMux
-	teamHandler *TeamHandler
-	userHandler *UserHandler
-	prHandler   *PullRequestHandler
+	db           *database.DB
+	mux          *http.ServeMux
+	teamHandler  *TeamHandler
+	userHandler  *UserHandler
+	prHandler    *PullRequestHandler
+	statsHandler *StatsHandler
 }
 
 func New(db *database.DB) *Handler {
@@ -23,14 +24,16 @@ func New(db *database.DB) *Handler {
 	userRepo := repository.NewUserRepository(db.DB)
 	prRepo := repository.NewPullRequestRepository(db.DB)
 	prService := service.NewPullRequestService(prRepo, userRepo)
+	statsRepo := repository.NewStatsRepository(db.DB)
 
 	h := &Handler{
-		BaseHandler: &BaseHandler{},
-		db:          db,
-		mux:         http.NewServeMux(),
-		teamHandler: NewTeamHandler(teamRepo),
-		userHandler: NewUserHandler(userRepo, prService),
-		prHandler:   NewPullRequestHandler(prService),
+		BaseHandler:  &BaseHandler{},
+		db:           db,
+		mux:          http.NewServeMux(),
+		teamHandler:  NewTeamHandler(teamRepo),
+		userHandler:  NewUserHandler(userRepo, prService),
+		prHandler:    NewPullRequestHandler(prService),
+		statsHandler: NewStatsHandler(statsRepo),
 	}
 
 	h.registerRoutes()
@@ -53,6 +56,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("POST /pullRequest/create", h.prHandler.CreatePR)
 	h.mux.HandleFunc("POST /pullRequest/merge", h.prHandler.MergePR)
 	h.mux.HandleFunc("POST /pullRequest/reassign", h.prHandler.ReassignPR)
+
+	h.mux.HandleFunc("GET /stats", h.statsHandler.GetStats)
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
