@@ -15,23 +15,28 @@ import (
 )
 
 func main() {
+	// Загрузка конфигурации
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
+	// Инициализация базы данных
 	db, err := database.New(cfg.Database)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
 
+	// Применение миграций
 	if err := db.RunMigrations(); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
+	// Инициализация обработчиков
 	handlers := handler.New(db)
 
+	// Настройка HTTP сервера
 	server := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
 		Handler:      handlers,
@@ -39,6 +44,7 @@ func main() {
 		WriteTimeout: cfg.Server.WriteTimeout,
 	}
 
+	// Graceful shutdown
 	go func() {
 		log.Printf("Server starting on port %s", cfg.Server.Port)
 
@@ -47,6 +53,7 @@ func main() {
 		}
 	}()
 
+	// Ожидание сигналов для graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit

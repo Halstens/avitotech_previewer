@@ -1,21 +1,31 @@
+// internal/handler/handler.go
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/pavel/avitotech_previewer/internal/database"
+	"github.com/pavel/avitotech_previewer/internal/repository"
 )
 
 type Handler struct {
-	db  *database.DB
-	mux *http.ServeMux
+	*BaseHandler
+	db          *database.DB
+	mux         *http.ServeMux
+	teamHandler *TeamHandler
+	userHandler *UserHandler
 }
 
 func New(db *database.DB) *Handler {
+	teamRepo := repository.NewTeamRepository(db.DB)
+	userRepo := repository.NewUserRepository(db.DB)
+
 	h := &Handler{
-		db:  db,
-		mux: http.NewServeMux(),
+		BaseHandler: &BaseHandler{},
+		db:          db,
+		mux:         http.NewServeMux(),
+		teamHandler: NewTeamHandler(teamRepo),
+		userHandler: NewUserHandler(userRepo),
 	}
 
 	h.registerRoutes()
@@ -27,11 +37,11 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("GET /health", h.healthCheck)
 
 	// Teams
-	h.mux.HandleFunc("POST /team/add", h.addTeam)
-	h.mux.HandleFunc("GET /team/get", h.getTeam)
+	h.mux.HandleFunc("POST /team/add", h.teamHandler.AddTeam)
+	h.mux.HandleFunc("GET /team/get", h.teamHandler.GetTeam)
 
 	// Users
-	h.mux.HandleFunc("POST /users/setIsActive", h.setUserActive)
+	h.mux.HandleFunc("POST /users/setIsActive", h.userHandler.SetUserActive)
 	h.mux.HandleFunc("GET /users/getReview", h.getUserReviews)
 
 	// Pull Requests
@@ -56,38 +66,7 @@ func (h *Handler) healthCheck(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Вспомогательные методы для ответов
-func (h *Handler) writeJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-	}
-}
-
-func (h *Handler) writeError(w http.ResponseWriter, status int, message, code string) {
-	h.writeJSON(w, status, map[string]interface{}{
-		"error": map[string]string{
-			"code":    code,
-			"message": message,
-		},
-	})
-}
-
 // Заглушки для обработчиков (будут реализованы в следующих этапах)
-func (h *Handler) addTeam(w http.ResponseWriter, r *http.Request) {
-	h.writeError(w, http.StatusNotImplemented, "Not implemented", "NOT_IMPLEMENTED")
-}
-
-func (h *Handler) getTeam(w http.ResponseWriter, r *http.Request) {
-	h.writeError(w, http.StatusNotImplemented, "Not implemented", "NOT_IMPLEMENTED")
-}
-
-func (h *Handler) setUserActive(w http.ResponseWriter, r *http.Request) {
-	h.writeError(w, http.StatusNotImplemented, "Not implemented", "NOT_IMPLEMENTED")
-}
-
 func (h *Handler) getUserReviews(w http.ResponseWriter, r *http.Request) {
 	h.writeError(w, http.StatusNotImplemented, "Not implemented", "NOT_IMPLEMENTED")
 }
