@@ -30,7 +30,7 @@ Cервис, который назначает ревьюеров на PR из �
 ["Тестовый" запрос для понимания использования API](./TESTING.md)
 
 #### Технологии
-`Go 1.24` `PostgreSQL 15` `golang-migrate` `Docker + Docker Compose`
+`Go 1.24` `PostgreSQL 15` `golang-migrate` `Docker + Docker Compose` `Makefile` `Postman`
 
 #### Описание функцинала
 
