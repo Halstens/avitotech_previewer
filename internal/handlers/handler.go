@@ -6,6 +6,7 @@ import (
 
 	"github.com/pavel/avitotech_previewer/internal/database"
 	"github.com/pavel/avitotech_previewer/internal/repository"
+	"github.com/pavel/avitotech_previewer/internal/service"
 )
 
 type Handler struct {
@@ -14,18 +15,22 @@ type Handler struct {
 	mux         *http.ServeMux
 	teamHandler *TeamHandler
 	userHandler *UserHandler
+	prHandler   *PullRequestHandler
 }
 
 func New(db *database.DB) *Handler {
 	teamRepo := repository.NewTeamRepository(db.DB)
 	userRepo := repository.NewUserRepository(db.DB)
+	prRepo := repository.NewPullRequestRepository(db.DB)
+	prService := service.NewPullRequestService(prRepo, userRepo)
 
 	h := &Handler{
 		BaseHandler: &BaseHandler{},
 		db:          db,
 		mux:         http.NewServeMux(),
 		teamHandler: NewTeamHandler(teamRepo),
-		userHandler: NewUserHandler(userRepo),
+		userHandler: NewUserHandler(userRepo, prService),
+		prHandler:   NewPullRequestHandler(prService),
 	}
 
 	h.registerRoutes()
@@ -42,12 +47,12 @@ func (h *Handler) registerRoutes() {
 
 	// Users
 	h.mux.HandleFunc("POST /users/setIsActive", h.userHandler.SetUserActive)
-	h.mux.HandleFunc("GET /users/getReview", h.getUserReviews)
+	h.mux.HandleFunc("GET /users/getReview", h.userHandler.GetUserReviews)
 
 	// Pull Requests
-	h.mux.HandleFunc("POST /pullRequest/create", h.createPR)
-	h.mux.HandleFunc("POST /pullRequest/merge", h.mergePR)
-	h.mux.HandleFunc("POST /pullRequest/reassign", h.reassignPR)
+	h.mux.HandleFunc("POST /pullRequest/create", h.prHandler.CreatePR)
+	h.mux.HandleFunc("POST /pullRequest/merge", h.prHandler.MergePR)
+	h.mux.HandleFunc("POST /pullRequest/reassign", h.prHandler.ReassignPR)
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -64,21 +69,4 @@ func (h *Handler) healthCheck(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, map[string]string{
 		"status": "ok",
 	})
-}
-
-// Заглушки для обработчиков (будут реализованы в следующих этапах)
-func (h *Handler) getUserReviews(w http.ResponseWriter, r *http.Request) {
-	h.writeError(w, http.StatusNotImplemented, "Not implemented", "NOT_IMPLEMENTED")
-}
-
-func (h *Handler) createPR(w http.ResponseWriter, r *http.Request) {
-	h.writeError(w, http.StatusNotImplemented, "Not implemented", "NOT_IMPLEMENTED")
-}
-
-func (h *Handler) mergePR(w http.ResponseWriter, r *http.Request) {
-	h.writeError(w, http.StatusNotImplemented, "Not implemented", "NOT_IMPLEMENTED")
-}
-
-func (h *Handler) reassignPR(w http.ResponseWriter, r *http.Request) {
-	h.writeError(w, http.StatusNotImplemented, "Not implemented", "NOT_IMPLEMENTED")
 }
