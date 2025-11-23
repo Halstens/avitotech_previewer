@@ -17,7 +17,6 @@ func NewPullRequestRepository(db *sql.DB) *PullRequestRepository {
 	return &PullRequestRepository{db: db}
 }
 
-// GetUserReviewPRs возвращает все PR, где пользователь назначен ревьюером
 func (r *PullRequestRepository) GetUserReviewPRs(ctx context.Context, userID string) ([]domain.PullRequestShort, error) {
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT pr.pull_request_id, pr.pull_request_name, pr.author_id, pr.status
@@ -43,7 +42,6 @@ func (r *PullRequestRepository) GetUserReviewPRs(ctx context.Context, userID str
 	return prs, nil
 }
 
-// CreatePR создает новый PR и назначает ревьюеров
 func (r *PullRequestRepository) CreatePR(ctx context.Context, pr *domain.PullRequest, reviewerIDs []string) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -51,7 +49,6 @@ func (r *PullRequestRepository) CreatePR(ctx context.Context, pr *domain.PullReq
 	}
 	defer tx.Rollback()
 
-	// Проверяем существование PR
 	var exists bool
 	err = tx.QueryRowContext(ctx,
 		"SELECT EXISTS(SELECT 1 FROM pull_requests WHERE pull_request_id = $1)",
@@ -63,7 +60,6 @@ func (r *PullRequestRepository) CreatePR(ctx context.Context, pr *domain.PullReq
 		return &domain.Error{Code: "PR_EXISTS", Message: "PR id already exists"}
 	}
 
-	// Проверяем существование автора
 	var authorExists bool
 	err = tx.QueryRowContext(ctx,
 		"SELECT EXISTS(SELECT 1 FROM users WHERE user_id = $1 AND is_active = true)",
@@ -75,7 +71,6 @@ func (r *PullRequestRepository) CreatePR(ctx context.Context, pr *domain.PullReq
 		return &domain.Error{Code: "NOT_FOUND", Message: "author not found or inactive"}
 	}
 
-	// Создаем PR
 	now := time.Now()
 	_, err = tx.ExecContext(ctx, `
 		INSERT INTO pull_requests (pull_request_id, pull_request_name, author_id, status, created_at)
@@ -85,7 +80,6 @@ func (r *PullRequestRepository) CreatePR(ctx context.Context, pr *domain.PullReq
 		return fmt.Errorf("failed to insert PR: %w", err)
 	}
 
-	// Назначаем ревьюеров
 	for _, reviewerID := range reviewerIDs {
 		_, err = tx.ExecContext(ctx, `
 			INSERT INTO pull_request_reviewers (pull_request_id, reviewer_id)
@@ -99,7 +93,6 @@ func (r *PullRequestRepository) CreatePR(ctx context.Context, pr *domain.PullReq
 	return tx.Commit()
 }
 
-// GetPR возвращает PR по ID
 func (r *PullRequestRepository) GetPR(ctx context.Context, prID string) (*domain.PullRequest, error) {
 	var pr domain.PullRequest
 	err := r.db.QueryRowContext(ctx, `
@@ -114,7 +107,6 @@ func (r *PullRequestRepository) GetPR(ctx context.Context, prID string) (*domain
 		return nil, fmt.Errorf("failed to get PR: %w", err)
 	}
 
-	// Получаем назначенных ревьюеров
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT reviewer_id 
 		FROM pull_request_reviewers 
@@ -136,7 +128,6 @@ func (r *PullRequestRepository) GetPR(ctx context.Context, prID string) (*domain
 	return &pr, nil
 }
 
-// MergePR помечает PR как мердженный
 func (r *PullRequestRepository) MergePR(ctx context.Context, prID string) (*domain.PullRequest, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -159,7 +150,6 @@ func (r *PullRequestRepository) MergePR(ctx context.Context, prID string) (*doma
 		return nil, fmt.Errorf("failed to merge PR: %w", err)
 	}
 
-	// Получаем назначенных ревьюеров
 	rows, err := tx.QueryContext(ctx, `
 		SELECT reviewer_id 
 		FROM pull_request_reviewers 
@@ -185,7 +175,6 @@ func (r *PullRequestRepository) MergePR(ctx context.Context, prID string) (*doma
 	return &pr, nil
 }
 
-// UpdatePRReviewers обновляет список ревьюеров PR
 func (r *PullRequestRepository) UpdatePRReviewers(ctx context.Context, prID string, reviewerIDs []string) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -193,7 +182,6 @@ func (r *PullRequestRepository) UpdatePRReviewers(ctx context.Context, prID stri
 	}
 	defer tx.Rollback()
 
-	// Удаляем старых ревьюеров
 	_, err = tx.ExecContext(ctx, `
 		DELETE FROM pull_request_reviewers 
 		WHERE pull_request_id = $1`,
@@ -202,7 +190,6 @@ func (r *PullRequestRepository) UpdatePRReviewers(ctx context.Context, prID stri
 		return fmt.Errorf("failed to delete old reviewers: %w", err)
 	}
 
-	// Добавляем новых ревьюеров
 	for _, reviewerID := range reviewerIDs {
 		_, err = tx.ExecContext(ctx, `
 			INSERT INTO pull_request_reviewers (pull_request_id, reviewer_id)
@@ -216,7 +203,6 @@ func (r *PullRequestRepository) UpdatePRReviewers(ctx context.Context, prID stri
 	return tx.Commit()
 }
 
-// GetTeamActiveUsers возвращает активных пользователей команды, исключая указанного пользователя
 func (r *PullRequestRepository) GetTeamActiveUsers(ctx context.Context, teamName string, excludeUserID string) ([]string, error) {
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT user_id 
@@ -241,7 +227,6 @@ func (r *PullRequestRepository) GetTeamActiveUsers(ctx context.Context, teamName
 	return userIDs, nil
 }
 
-// GetUserTeam возвращает команду пользователя
 func (r *PullRequestRepository) GetUserTeam(ctx context.Context, userID string) (string, error) {
 	var teamName string
 	err := r.db.QueryRowContext(ctx, `

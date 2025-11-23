@@ -23,7 +23,6 @@ func (r *TeamRepository) CreateTeam(ctx context.Context, team *domain.Team) erro
 	}
 	defer tx.Rollback()
 
-	// Проверяем существование команды
 	var exists bool
 	err = tx.QueryRowContext(ctx,
 		"SELECT EXISTS(SELECT 1 FROM teams WHERE team_name = $1)",
@@ -35,7 +34,6 @@ func (r *TeamRepository) CreateTeam(ctx context.Context, team *domain.Team) erro
 		return &domain.Error{Code: "TEAM_EXISTS", Message: "team already exists"}
 	}
 
-	// Создаем команду
 	_, err = tx.ExecContext(ctx,
 		"INSERT INTO teams (team_name) VALUES ($1)",
 		team.TeamName)
@@ -43,7 +41,6 @@ func (r *TeamRepository) CreateTeam(ctx context.Context, team *domain.Team) erro
 		return fmt.Errorf("failed to insert team: %w", err)
 	}
 
-	// Создаем/обновляем пользователей
 	for _, member := range team.Members {
 		_, err = tx.ExecContext(ctx, `
 			INSERT INTO users (user_id, username, team_name, is_active) 

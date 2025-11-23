@@ -35,41 +35,6 @@ type ReassignedPR struct {
 	NewReviewer string `json:"new_reviewer"`
 }
 
-// func (s *BulkDeactivationService) BulkDeactivateTeam(ctx context.Context, teamName string, excludeUserIDs []string) (*BulkDeactivationResult, error) {
-// 	// Получаем пользователей команды до деактивации
-// 	teamUsers, err := s.userRepo.GetTeamUsers(ctx, teamName)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	if len(teamUsers) == 0 {
-// 		return nil, &domain.Error{Code: "NOT_FOUND", Message: "team not found"}
-// 	}
-
-// 	// Деактивируем пользователей
-// 	deactivatedCount, err := s.userRepo.BulkDeactivateUsers(ctx, teamName, excludeUserIDs)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	// Находим пользователей, которых нужно деактивировать
-// 	usersToDeactivate := s.getUsersToDeactivate(teamUsers, excludeUserIDs)
-
-// 	// Переназначаем открытые PR для деактивированных пользователей
-// 	reassignedPRs, err := s.reassignPRsForDeactivatedUsers(ctx, usersToDeactivate)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	result := &BulkDeactivationResult{
-// 		DeactivatedCount: deactivatedCount,
-// 		ReassignedPRs:    reassignedPRs,
-// 		Timestamp:        time.Now(),
-// 	}
-
-// 	return result, nil
-// }
-
 func (s *BulkDeactivationService) getUsersToDeactivate(teamUsers []domain.User, excludeUserIDs []string) []domain.User {
 	excludeSet := make(map[string]bool)
 	for _, id := range excludeUserIDs {
@@ -100,7 +65,6 @@ func (s *BulkDeactivationService) reassignPRsForDeactivatedUsers(ctx context.Con
 
 			newReviewer, err := s.prService.ReassignReviewer(ctx, prID, user.UserID)
 			if err != nil {
-				// Логируем ошибку, но продолжаем обработку других PR
 				fmt.Printf("Failed to reassign PR %s from user %s: %v\n", prID, user.UserID, err)
 				continue
 			}

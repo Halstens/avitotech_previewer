@@ -109,7 +109,6 @@ func (h *PullRequestHandler) ReassignPR(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Используем новый метод GetPR вместо прямого доступа к prRepo
 	pr, err := h.prService.GetPR(r.Context(), request.PullRequestID)
 	if err != nil {
 		h.writeError(w, http.StatusInternalServerError, "Internal server error", "INTERNAL_ERROR")

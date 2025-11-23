@@ -56,7 +56,6 @@ func (h *UserHandler) GetUserReviews(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Проверяем существование пользователя
 	_, err := h.userRepo.GetUserByID(r.Context(), userID)
 	if err != nil {
 		if domain.IsDomainError(err, "NOT_FOUND") {
@@ -67,7 +66,6 @@ func (h *UserHandler) GetUserReviews(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Получаем PR пользователя как ревьюера
 	prs, err := h.prService.GetUserReviewPRs(r.Context(), userID)
 	if err != nil {
 		h.writeError(w, http.StatusInternalServerError, "Internal server error", "INTERNAL_ERROR")

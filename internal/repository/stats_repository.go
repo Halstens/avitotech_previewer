@@ -14,7 +14,6 @@ func NewStatsRepository(db *sql.DB) *StatsRepository {
 	return &StatsRepository{db: db}
 }
 
-// GetStats возвращает статистику по PR и назначениям
 func (r *StatsRepository) GetStats(ctx context.Context) (map[string]interface{}, error) {
 	stats := make(map[string]interface{})
 
@@ -36,7 +35,6 @@ func (r *StatsRepository) GetStats(ctx context.Context) (map[string]interface{},
 		"total":  openCount + mergedCount,
 	}
 
-	// Количество назначений по пользователям
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT u.user_id, u.username, COUNT(prr.pull_request_id) as assignment_count
 		FROM users u
@@ -64,7 +62,6 @@ func (r *StatsRepository) GetStats(ctx context.Context) (map[string]interface{},
 	}
 	stats["assignments"] = assignments
 
-	// Статистика по командам
 	teamStats, err := r.getTeamStats(ctx)
 	if err != nil {
 		return nil, err
@@ -74,9 +71,7 @@ func (r *StatsRepository) GetStats(ctx context.Context) (map[string]interface{},
 	return stats, nil
 }
 
-// getTeamStats возвращает статистику по командам
 func (r *StatsRepository) getTeamStats(ctx context.Context) (map[string]interface{}, error) {
-	// Количество пользователей по командам
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT 
 			team_name,
@@ -113,7 +108,6 @@ func (r *StatsRepository) getTeamStats(ctx context.Context) (map[string]interfac
 
 	teamStats["summary"] = teams
 
-	// Общая статистика по командам
 	var totalTeams, totalUsers int
 	err = r.db.QueryRowContext(ctx, `
 		SELECT 

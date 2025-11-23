@@ -5,14 +5,14 @@ RUN apk add --no-cache git ca-certificates
 
 WORKDIR /app
 
-# Копируем файлы модулей сначала для лучшего кэширования
+
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Копируем исходный код
+
 COPY . .
 
-# Собираем приложение
+
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o main ./cmd/server
 
 FROM alpine:latest

@@ -75,7 +75,6 @@ func (c *DatabaseConfig) DSN() string {
 		c.Host, c.Port, c.User, c.Password, c.Name, c.SSLMode)
 }
 
-// Вспомогательные функции для чтения переменных окружения
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value

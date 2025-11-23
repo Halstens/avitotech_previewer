@@ -39,7 +39,6 @@ type PullRequestShort struct {
 	Status          string `json:"status"`
 }
 
-// DB модели для работы с repository
 type TeamDB struct {
 	TeamName  string    `db:"team_name"`
 	CreatedAt time.Time `db:"created_at"`
